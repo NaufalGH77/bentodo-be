@@ -11,12 +11,31 @@ pkg.types.setTypeParser(TIMESTAMP_OID, (value) => {
 });
 
 const isProduction = process.env.NODE_ENV === "production";
+
+// Support either a single DATABASE_URL or separate DB_* env vars
+const {
+  DB_USERNAME,
+  DB_PASSWORD,
+  DB_HOST,
+  DB_PORT,
+  DB_DATABASE,
+} = process.env;
+
+const defaultHost = DB_HOST || "localhost";
+const defaultPort = DB_PORT || "5432";
+
+const connectionString =
+  process.env.DATABASE_URL ||
+  `postgres://${encodeURIComponent(DB_USERNAME || "postgres")}:${encodeURIComponent(
+    DB_PASSWORD || "",
+  )}@${defaultHost}:${defaultPort}/${DB_DATABASE || "postgres"}`;
+
 const shouldUseSSL =
   process.env.DB_SSL === "true" ||
   (process.env.DB_SSL !== "false" && isProduction && !!process.env.DATABASE_URL);
 
 export const db = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
   ssl: shouldUseSSL
     ? {
         rejectUnauthorized: false,

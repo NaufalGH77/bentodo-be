@@ -21,6 +21,8 @@ const app = express();
 
 app.disable("x-powered-by");
 
+const isDev = process.env.NODE_ENV !== "production";
+
 const allowedOrigins = (
   process.env.CLIENT_ORIGINS || "http://localhost:5173"
 )
@@ -28,25 +30,36 @@ const allowedOrigins = (
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) {
-      return callback(null, true);
-    }
+let corsOptions;
+if (isDev) {
+  // In development allow any origin to simplify local testing (dev only)
+  corsOptions = {
+    origin: true,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Authorization", "Content-Type", "x-guest-session-token"],
+  };
+} else {
+  corsOptions = {
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-    const corsError = new Error("Origin tidak diizinkan oleh CORS.");
-    corsError.status = 403;
+      const corsError = new Error("Origin tidak diizinkan oleh CORS.");
+      corsError.status = 403;
 
-    return callback(corsError);
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Authorization", "Content-Type", "x-guest-session-token"],
-};
+      return callback(corsError);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Authorization", "Content-Type", "x-guest-session-token"],
+  };
+}
 
 app.use(helmet());
 app.use(cors(corsOptions));
