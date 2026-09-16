@@ -1,0 +1,10 @@
+node_modules
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+*.md
+*.postman_collection.json
+*.log
+npm-debug.log*
